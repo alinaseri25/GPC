@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/preFiles">
+        <file>icon.png</file>
+        <file>533px-Compass_Card.svg.png</file>
+        <file>digital-compass.png</file>
+    </qresource>
+</RCC>
