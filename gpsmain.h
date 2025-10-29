@@ -7,7 +7,6 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QMessageBox>
 #include <QClipboard>
-#include <../AndroidNotification/notificationclient.h>
 #include <QFile>
 #include <QTextStream>
 #include <QMenuBar>

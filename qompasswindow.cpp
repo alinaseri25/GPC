@@ -29,7 +29,7 @@ void QompassWindow::QompassChanged(int _degree)
     ui->GV_Qompass->setFixedHeight(Lenghth);
     degree = _degree;
     ui->Lbl_Degree->setText(QString("%1").arg(degree));
-    QMatrix mt;
+    QTransform mt;
     mt.rotate(degree);
     graphicsScene->clear();
     graphicsScene->addPixmap((QPixmap::fromImage(QImage(":/preFiles/digital-compass.png")))

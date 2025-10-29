@@ -412,7 +412,7 @@ void GPSMain::on_BtnTracker_Clicked()
                                 .arg(QTime::currentTime().second()));
         //QMessageBox::about(this,QString("ADDR"),trackerFile->fileName());
         trackerTextStream = new QTextStream(trackerFile);
-        trackerTextStream->setCodec("UTF-8");
+        //trackerTextStream->setCodec("UTF-8");
         trackerFile->open(QFile::ReadWrite);
         QString Data = QString("ID,Longitude,latitude,DateTime\n");
         *trackerTextStream << Data;
