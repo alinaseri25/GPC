@@ -6,6 +6,9 @@ GPSMain::GPSMain(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::GPSMain)
 {
+    ui->setupUi(this);
+    acquirePartialWakeLock();
+
     QApplication::setApplicationVersion(QString("2.0.0"));
     QApplication::setApplicationDisplayName(QString("GP Control"));
     LocationWindow = NULL;
@@ -81,7 +84,6 @@ GPSMain::GPSMain(QWidget *parent) :
     InUse = InView = 0;
     SatSet = false;
     Direction = "nan";
-    ui->setupUi(this);
     ChangeBtnState(false);
     changelocationNameBar(false);
 
@@ -99,6 +101,7 @@ GPSMain::GPSMain(QWidget *parent) :
 GPSMain::~GPSMain()
 {
     delete ui;
+    releasePartialWakeLock();
 }
 
 QString GPSMain::SatelliteType(int StType)
@@ -471,4 +474,44 @@ void GPSMain::on_Btn_Locations_clicked()
     LocationWindow = new Locations(this);
     LocationWindow->setData(&Path,&Longitude,&latitude,&Hight,&HAC,&GSPeed,&Direction,&Magvar);
     LocationWindow->show();
+}
+
+
+void GPSMain::acquirePartialWakeLock()
+{
+#ifdef Q_OS_ANDROID
+    QJniObject activity =
+        QJniObject::callStaticObjectMethod(
+            "org/qtproject/qt/android/QtNative",
+            "activity",
+            "()Landroid/app/Activity;");
+
+    if (!activity.isValid()) return;
+
+    QJniObject context = activity.object();
+    QJniObject powerService = context.callObjectMethod(
+        "getSystemService",
+        "(Ljava/lang/String;)Ljava/lang/Object;",
+        QJniObject::fromString("power").object());
+
+    if (!powerService.isValid()) return;
+
+    // 1 = PowerManager.PARTIAL_WAKE_LOCK
+    g_wakeLock = powerService.callObjectMethod(
+        "newWakeLock",
+        "(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;",
+        (jint)1,                         // PARTIAL_WAKE_LOCK
+        QJniObject::fromString("GPC_WakeLock").object());
+
+    if (g_wakeLock.isValid())
+        g_wakeLock.callMethod<void>("acquire", "()V");
+#endif
+}
+
+void GPSMain::releasePartialWakeLock()
+{
+#ifdef Q_OS_ANDROID
+    if (g_wakeLock.isValid())
+        g_wakeLock.callMethod<void>("release", "()V");
+#endif
 }

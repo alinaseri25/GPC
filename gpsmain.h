@@ -46,9 +46,16 @@ private:
     QFile *LogFile,*trackerFile;
     QTextStream *LogTextStream,*trackerTextStream;
     int IDCounter;
+    QJniObject g_wakeLock;
 
     void ChangeBtnState(bool state);
     void changelocationNameBar(bool state);
+    void acquirePartialWakeLock(void);
+    void releasePartialWakeLock(void);
+
+
+
+
     int LocationNumber;
 
 
@@ -79,7 +86,6 @@ private slots:
     void on_DspbTracker_valuechanged(double value);
 
     void on_Btn_Locations_clicked();
-
 
 signals:
     void QompassChange(int degree);
