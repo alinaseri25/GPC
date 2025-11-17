@@ -31,6 +31,11 @@ GPSMain::GPSMain(QWidget *parent) :
             break;
         }
     }
+#ifdef Q_OS_ANDROID
+    Path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(Path);
+#endif
+    //QMessageBox::about(this,QString("!application path!"),Path);
     trackerPath = Path;
     Path = QString("%1/gps.db").arg(Path);
     //Path = QString("/storage/emulated/gps.db").arg(Path);
