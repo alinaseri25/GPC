@@ -2,12 +2,40 @@
 #include "ui_gpsmain.h"
 #include "../../JalaliDate/qdatejalali.h"
 
+// ------- GLOBAL POINTER -------
+static GPSMain* g_mainWindowInstance = nullptr;
+
+extern "C"
+    JNIEXPORT void JNICALL
+    Java_org_verya_GPC_TestBridge_nativeOnNotificationAction(
+        JNIEnv* env,
+        jobject thiz,
+        jstring msg)
+{
+    const char *utf = env->GetStringUTFChars(msg, nullptr);
+    QString qmsg = QString::fromUtf8(utf ? utf : "");
+    env->ReleaseStringUTFChars(msg, utf);
+
+    qDebug() << "[JNI Callback] Notification action clicked!";
+
+    // اطمینان از اجرای کد UI روی Thread اصلی Qt
+    QMetaObject::invokeMethod(QCoreApplication::instance(), [qmsg] {
+        qDebug() << "[Qt C++] Action received in UI thread.";
+        emit g_mainWindowInstance->notificationActionPressed(qmsg);
+        // هر عملیات UI دلخواه اینجا
+    }, Qt::QueuedConnection);
+}
+
+
 GPSMain::GPSMain(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::GPSMain)
 {
     ui->setupUi(this);
     acquirePartialWakeLock();
+    g_mainWindowInstance = this;
+    connect(this,&GPSMain::notificationActionPressed,this,&GPSMain::onNotificationActionPressed);
+
 
     QApplication::setApplicationVersion(QString("2.0.0"));
     QApplication::setApplicationDisplayName(QString("GP Control"));
@@ -96,6 +124,9 @@ GPSMain::GPSMain(QWidget *parent) :
     connect(ui->BtnTracker,&QPushButton::clicked,this,&GPSMain::on_BtnTracker_Clicked);
 
     trackerFile = new QFile(this);
+
+    updateNotification("Verya GPC", "App Started");
+    showNotification = true;
 }
 
 GPSMain::~GPSMain()
@@ -274,6 +305,10 @@ void GPSMain::setGPSLocation(QGeoPositionInfo geoPositionInfo)
     }
     Str += QString("\nInUse/InView:%2/%1").arg(InView).arg(InUse);
     ui->Txt_Location->setText(Str);
+    if(showNotification)
+    {
+        updateNotification(QString("Verya GPS"),Str);
+    }
 }
 
 void GPSMain::on_Btn_Exit_clicked()
@@ -476,6 +511,18 @@ void GPSMain::on_Btn_Locations_clicked()
     LocationWindow->show();
 }
 
+void GPSMain::onNotificationActionPressed(QString Name)
+{
+    if(Name == QString("stop"))
+    {
+        showNotification = false;
+    }
+    else if(Name == QString("start"))
+    {
+        showNotification = true;
+    }
+}
+
 
 void GPSMain::acquirePartialWakeLock()
 {
@@ -513,5 +560,27 @@ void GPSMain::releasePartialWakeLock()
 #ifdef Q_OS_ANDROID
     if (g_wakeLock.isValid())
         g_wakeLock.callMethod<void>("release", "()V");
+#endif
+}
+
+void GPSMain::updateNotification(QString Tittle,QString Text)
+{
+#ifdef Q_OS_ANDROID
+    QJniObject context = QNativeInterface::QAndroidApplication::context();
+    if (!context.isValid())
+        return;
+
+    int notifyId = 2025;
+    QJniObject jTitle = QJniObject::fromString(Tittle);
+    QJniObject jMsg   = QJniObject::fromString(Text);
+
+    QJniObject::callStaticMethod<void>(
+        "org/verya/GPC/TestBridge",
+        "postNotification",
+        "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;I)V",
+        context.object(),
+        jTitle.object<jstring>(),
+        jMsg.object<jstring>(),
+        notifyId);
 #endif
 }

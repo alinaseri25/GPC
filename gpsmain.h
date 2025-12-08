@@ -20,6 +20,10 @@
 #include <QTimer>
 #include <QTime>
 #include <QDoubleSpinBox>
+#include <QMessageBox>
+#include <QJniObject>
+#include <QJniEnvironment>
+#include <QtCore/qnativeinterface.h>
 
 namespace Ui {
 class GPSMain;
@@ -47,11 +51,13 @@ private:
     QTextStream *LogTextStream,*trackerTextStream;
     int IDCounter;
     QJniObject g_wakeLock;
+    bool showNotification;
 
     void ChangeBtnState(bool state);
     void changelocationNameBar(bool state);
     void acquirePartialWakeLock(void);
     void releasePartialWakeLock(void);
+    void updateNotification(QString Tittle,QString Text);
 
 
 
@@ -86,9 +92,11 @@ private slots:
     void on_DspbTracker_valuechanged(double value);
 
     void on_Btn_Locations_clicked();
+    void onNotificationActionPressed(QString Name);
 
 signals:
     void QompassChange(int degree);
+    void notificationActionPressed(QString Name);
 };
 
 #endif // GPSMAIN_H
