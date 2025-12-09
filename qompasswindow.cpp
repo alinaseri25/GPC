@@ -6,10 +6,10 @@ QompassWindow::QompassWindow(QWidget *parent) :
     ui(new Ui::QompassWindow)
 {
     ui->setupUi(this);
-    degree = 0;
-    graphicsScene = new QGraphicsScene(this);
-    ui->GV_Qompass->setScene(graphicsScene);
-    QompassChanged(0);
+    pixmap = QPixmap::fromImage(QImage(":/preFiles/digital-compass.png"));
+    compass = new QCompass(this);
+    connect(compass,&QCompass::readingChanged,this,&QompassWindow::onReadingChanged);
+    compass->start();
 }
 
 QompassWindow::~QompassWindow()
@@ -17,23 +17,42 @@ QompassWindow::~QompassWindow()
     delete ui;
 }
 
-void QompassWindow::paintEvent(QPaintEvent *_paint)
+void QompassWindow::onReadingChanged()
 {
-    Q_UNUSED(_paint)
-}
+    QCompassReading *reading = compass->reading();
+    if (reading) {
+        azimuth = reading->azimuth();   // زاویه جهت شمال مغناطیسی (درجه)
+        calibration = reading->calibrationLevel(); // سطح کالیبراسیون
+        QString compassStr = QString("%1°").arg(azimuth);
+        //qDebug() << compassStr;
+        ui->Lbl_Degree->setText(compassStr);
 
-void QompassWindow::QompassChanged(int _degree)
-{
-    int Lenghth = ui->scrollArea->width()-30;
-    ui->GV_Qompass->setFixedWidth(Lenghth);
-    ui->GV_Qompass->setFixedHeight(Lenghth);
-    degree = _degree;
-    ui->Lbl_Degree->setText(QString("%1").arg(degree));
-    QTransform mt;
-    mt.rotate(degree);
-    graphicsScene->clear();
-    graphicsScene->addPixmap((QPixmap::fromImage(QImage(":/preFiles/digital-compass.png")))
-                             .scaledToHeight(Lenghth)
-                             .scaledToWidth(Lenghth)
-                             .transformed(mt));
+        int side = qMin(ui->LblView->width(), ui->LblView->height());
+        QPixmap canvas(side, side);
+        canvas.fill(Qt::transparent);
+
+        QPainter p(&canvas);
+        p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+        p.setRenderHint(QPainter::Antialiasing, true);
+
+        // مرکز بوم = مبدا چرخش
+        p.translate(side / 2.0, side / 2.0);
+        p.rotate(-azimuth);
+        p.translate(-side / 2.0, -side / 2.0);
+
+        // حالا تصویر اصلی را fit می‌کنیم داخل بوم
+        QSize targetSize(side, side);
+        QPixmap scaledPixmap = pixmap.scaled(targetSize,
+                                             Qt::KeepAspectRatio,
+                                             Qt::SmoothTransformation);
+
+        // رسم در مرکز بوم
+        int x = (side - scaledPixmap.width()) / 2;
+        int y = (side - scaledPixmap.height()) / 2;
+        p.drawPixmap(x, y, scaledPixmap);
+
+        p.end();
+
+        ui->LblView->setPixmap(canvas);
+    }
 }

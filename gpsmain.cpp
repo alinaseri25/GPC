@@ -431,7 +431,6 @@ void GPSMain::on_Btn_Cancel_clicked()
 
 void GPSMain::on_Qompass_clicked()
 {
-    QMessageBox::about(this,QString("GPS Path"),QString("Data : %1").arg(Path));
     if(QompWindow)
         delete QompWindow;
     QompWindow = new QompassWindow(this);

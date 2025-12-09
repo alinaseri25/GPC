@@ -4,9 +4,11 @@
 #define PI  	3.14159265358979323846
 
 #include <QMainWindow>
+#include <QPixmap>
+#include <QTransform>
+#include <QCompass>
+#include <QCompassReading>
 #include <QPainter>
-#include <QGraphicsView>
-#include <QGraphicsScene>
 
 namespace Ui {
 class QompassWindow;
@@ -23,12 +25,13 @@ public:
 private:
     Ui::QompassWindow *ui;
 
-    void paintEvent(QPaintEvent *_paint);
-    int degree;
-    QGraphicsScene *graphicsScene;
+    qreal azimuth;
+    qreal calibration;
+    QCompass *compass;
+    QPixmap pixmap;
 
 private slots:
-    void QompassChanged(int _degree);
+    void onReadingChanged(void);
 };
 
 #endif // QOMPASSWINDOW_H

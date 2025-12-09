@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui positioning sql
+QT       += core gui positioning sql sensors
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
