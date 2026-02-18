@@ -52,6 +52,10 @@ GPSMain::GPSMain(QWidget *parent) :
     LocationNumber = 0;
     this->setFixedSize(this->geometry().width(),this->geometry().height());
 
+#ifdef Q_OS_ANDROID
+    Path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(Path);
+#else
     QStringList systemEnvironment = QProcess::systemEnvironment();
     foreach (QString Str, systemEnvironment) {
         //QMessageBox::about(this,QString("System Environment"),QString("Data : %1").arg(Str));
@@ -62,9 +66,6 @@ GPSMain::GPSMain(QWidget *parent) :
             break;
         }
     }
-#ifdef Q_OS_ANDROID
-    Path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir().mkpath(Path);
 #endif
     //QMessageBox::about(this,QString("!application path!"),Path);
     trackerPath = Path;
